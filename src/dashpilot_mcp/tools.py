@@ -252,3 +252,182 @@ def register_tools(mcp: MCPServer, api: ApiClient, drive: DriveClient,
         if note:
             out["sync_note"] = note
         return out
+
+    @tool(annotations=SPENDS_MONEY)
+    async def dispatch_delivery(
+        external_delivery_id: str,
+        pickup_address: str,
+        dropoff_address: str,
+        dropoff_phone_number: str,
+        order_value: int,
+        tip: int = 0,
+        dropoff_contact_given_name: str | None = None,
+        dropoff_contact_family_name: str | None = None,
+        dropoff_instructions: str | None = None,
+        pickup_business_name: str | None = None,
+        pickup_instructions: str | None = None,
+        pickup_reference_tag: str | None = None,
+        contactless_dropoff: bool = True,
+    ) -> Any:
+        """Dispatch a delivery immediately (quote + accept in one step): a Dasher is
+        assigned and the delivery is billed by DoorDash to your Drive account. MOVES
+        MONEY: quote first with get_delivery_quote, show the user the fee and ETA, and
+        dispatch only after their explicit confirmation. The request goes straight to
+        DoorDash, signed with your local key. Parameters are identical to
+        get_delivery_quote."""
+        payload = _payload(external_delivery_id, dropoff_address, dropoff_phone_number,
+                           order_value, tip, contactless_dropoff, {
+                               "pickup_address": pickup_address,
+                               "pickup_business_name": pickup_business_name,
+                               "pickup_instructions": pickup_instructions,
+                               "pickup_reference_tag": pickup_reference_tag,
+                               "dropoff_contact_given_name": dropoff_contact_given_name,
+                               "dropoff_contact_family_name": dropoff_contact_family_name,
+                               "dropoff_instructions": dropoff_instructions,
+                           })
+        try:
+            res = await drive.create_delivery(payload)
+        except DashpilotError as exc:
+            return exc.to_payload()
+        note = await report([{"external_delivery_id": external_delivery_id,
+                              "kind": "dispatch", "fee_cents": res.get("fee", 0),
+                              "tax_cents": res.get("tax", 0),
+                              "tip_cents": res.get("tip", 0),
+                              "order_value_cents": res.get("order_value", 0),
+                              "dropoff_address": dropoff_address}])
+        out = _drive_view(res)
+        if note:
+            out["sync_note"] = note
+        return out
+
+    @tool(annotations=SPENDS_MONEY)
+    async def schedule_delivery(
+        external_delivery_id: str,
+        pickup_address: str,
+        dropoff_address: str,
+        dropoff_phone_number: str,
+        order_value: int,
+        dispatch_at: str,
+        tip: int = 0,
+        dropoff_contact_given_name: str | None = None,
+        dropoff_contact_family_name: str | None = None,
+        dropoff_instructions: str | None = None,
+        pickup_business_name: str | None = None,
+        pickup_instructions: str | None = None,
+        pickup_reference_tag: str | None = None,
+        contactless_dropoff: bool = True,
+    ) -> Any:
+        """Schedule a delivery for later. DashPilot Cloud stores ONLY the unsigned
+        payload — no signing secret, no bearer token, nothing it could spend. When
+        dispatch_at arrives, call dispatch_due_deliveries (from this machine) to fire
+        due work: a fresh 60-second JWT is minted locally at that moment and the
+        delivery goes straight to DoorDash.
+
+        Moves no money NOW, but commits a future dispatch your poller will execute
+        with your key: confirm the plan (address, time, estimated fee) with the user
+        before scheduling.
+
+        dispatch_at: ISO-8601 UTC time to dispatch, e.g. 2026-08-27T18:30:00Z.
+        Other parameters are identical to get_delivery_quote.
+        """
+        payload = _payload(external_delivery_id, dropoff_address, dropoff_phone_number,
+                           order_value, tip, contactless_dropoff, {
+                               "pickup_address": pickup_address,
+                               "pickup_business_name": pickup_business_name,
+                               "pickup_instructions": pickup_instructions,
+                               "pickup_reference_tag": pickup_reference_tag,
+                               "dropoff_contact_given_name": dropoff_contact_given_name,
+                               "dropoff_contact_family_name": dropoff_contact_family_name,
+                               "dropoff_instructions": dropoff_instructions,
+                           })
+        return await cloud("/v1/schedules", "POST", {
+            "external_delivery_id": external_delivery_id,
+            "dispatch_at": dispatch_at,
+            "payload": payload,
+        })
+
+    @tool(annotations=SPENDS_MONEY)
+    async def schedule_batch(
+        deliveries: list[dict],
+        dispatch_at: str,
+        pickup_address: str = "",
+        stagger_minutes: int = 0,
+    ) -> Any:
+        """Schedule a whole event's deliveries in one call — a restaurant launch, a
+        catering run, office-lunch drops. Each item needs external_delivery_id,
+        dropoff_address, dropoff_phone_number, and order_value (cents); tip and
+        dropoff_instructions are optional. pickup_address applies to items that don't
+        set their own.
+
+        dispatch_at: ISO-8601 UTC for the FIRST dispatch; stagger_minutes spreads the
+        rest (e.g. 12 deliveries, stagger 15 = one drop every 15 minutes, so the
+        kitchen is never slammed). Everything lands in the due queue as unsigned
+        payloads and fires via dispatch_due_deliveries.
+
+        Moves no money NOW, but commits N future dispatches the user's poller will
+        execute with their key: ALWAYS summarize the full plan — count, addresses,
+        window, estimated total fees — and get the user's explicit confirmation
+        before scheduling.
+        """
+        try:
+            base = datetime.fromisoformat(dispatch_at.replace("Z", "+00:00"))
+        except ValueError:
+            return {"error": {"code": "bad_dispatch_at",
+                              "message": "dispatch_at must be ISO-8601, e.g. 2026-09-01T18:30:00Z"}}
+        scheduled, failures = [], []
+        for i, item in enumerate(deliveries[:50]):
+            at = (base + timedelta(minutes=i * max(stagger_minutes, 0))).strftime(
+                "%Y-%m-%dT%H:%M:%SZ")
+            payload = _clean({"pickup_address": pickup_address or None, **item})
+            result = await cloud("/v1/schedules", "POST", {
+                "external_delivery_id": item.get("external_delivery_id", ""),
+                "dispatch_at": at,
+                "payload": payload,
+            })
+            if isinstance(result, dict) and "error" in result:
+                failures.append({"external_delivery_id": item.get("external_delivery_id"),
+                                 **result})
+            else:
+                scheduled.append({"external_delivery_id": item.get("external_delivery_id"),
+                                  "dispatch_at": at})
+        return {"scheduled": len(scheduled), "deliveries": scheduled,
+                "failures": failures,
+                "note": "Unsigned payloads only — your poller signs and dispatches each "
+                        "one when due (dispatch_due_deliveries)."}
+
+    @tool(annotations=SPENDS_MONEY)
+    async def dispatch_due_deliveries() -> Any:
+        """Fire every scheduled delivery that is due right now. Asks DashPilot Cloud
+        for the due queue (unsigned payloads only), mints a fresh short-lived JWT on
+        this machine for each one, dispatches directly to DoorDash Drive, and reports
+        the results back for the ops board. Run it on a cadence (or whenever you want
+        due work flushed) — the cloud backend cannot dispatch anything itself."""
+        try:
+            due = await api.get("/v1/schedules/due")
+        except DashpilotError as exc:
+            return exc.to_payload()
+        items = due.get("due", [])
+        if not items:
+            return {"dispatched": 0, "deliveries": []}
+        results, events = [], []
+        for item in items:
+            payload = item["payload"]
+            try:
+                res = await drive.create_delivery(payload)  # fresh 60s JWT, minted here
+                results.append(_drive_view(res))
+                events.append({
+                    "external_delivery_id": item["external_delivery_id"],
+                    "kind": "dispatch", "fee_cents": res.get("fee", 0),
+                    "tax_cents": res.get("tax", 0),
+                    "tip_cents": res.get("tip", 0),
+                    "order_value_cents": res.get("order_value", 0),
+                    "dropoff_address": payload.get("dropoff_address"),
+                })
+            except DashpilotError as exc:
+                results.append({"external_delivery_id": item["external_delivery_id"],
+                                **exc.to_payload()})
+        note = await report(events)
+        out: dict[str, Any] = {"dispatched": len(events), "deliveries": results}
+        if note:
+            out["sync_note"] = note
+        return out
