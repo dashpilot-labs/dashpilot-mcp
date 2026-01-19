@@ -66,6 +66,67 @@ DASHPILOT_DRIVE_BASE_URL=http://localhost:8790/drive-sim/drive/v2  # local dev o
   fleet-wide endpoint migrations work. Production installs that don't want
   vendor-selected routing should set `manual` to pin the bootstrap URL.
 
+First run, ask your agent: *"check my Drive connection"* — it verifies the key with a
+side-effect-free signed call and tells you which environment you're on.
+
+## The autonomy model: your money moves only with your yes
+
+The agent is a planner, not a spender. Every tool is annotated in the MCP protocol
+(`readOnlyHint` / `destructiveHint`) so your client can auto-approve the safe ones and
+always prompt for the rest:
+
+| The agent can do alone | The agent needs your explicit confirmation for |
+|---|---|
+| Quotes (fee, tax, ETA) — quote liberally | Dispatching anything (`accept_quote`, `dispatch_delivery`, `batch_dispatch`) |
+| Live tracking, ops board, account, settings, diagnostics sync (`sync_diagnostics`) | Tip changes and cancels (`update_delivery`, `cancel_delivery`) |
+| Planning an event and showing you the full plan | Scheduling it (`schedule_delivery`, `schedule_batch`) — scheduling moves no money now but commits a future dispatch your poller will execute with your key |
+| | Uploading diagnostics (`generate_support_bundle`) — the receipt itemizes the sections sent (section names and total size, not field contents) |
+
+`dispatch_due_deliveries` is the executor of confirmed plans: everything it fires was
+already confirmed at schedule time, so it needs no new confirmation. Run it on a cadence
+and due work just fires.
+
+## What you can ask for
+
+- *"Quote a delivery for order #1001 to 350 5th Ave"* — `get_delivery_quote` (fee, tax, ETA)
+- *"Dispatch it"* — `accept_quote`, or `dispatch_delivery` to quote+accept in one step
+- *"Schedule the catering run for 6:30pm"* — `schedule_delivery`, then `dispatch_due_deliveries` fires due work with a fresh local JWT
+- *"Schedule my launch night: 12 drops, one every 15 minutes from 6pm"* — `schedule_batch` (up to 50, staggered)
+- *"Dispatch these 12 office lunches now"* — `batch_dispatch` (up to 25 at once)
+- *"Where is order #1001?"* — `track_delivery` (status, Dasher, ETA, tracking URL — straight from DoorDash)
+- *"Show today's board"* — `list_deliveries`
+- *"Bump the tip on #1001 by $2"* — `update_delivery`
+- *"Cancel #1002"* — `cancel_delivery`
+
+Money questions live in your DoorDash developer portal — DoorDash bills you directly;
+DashPilot has no billing surface.
+
+The agent is instructed (server-level policy) to always quote the fee and confirm with
+you before dispatching — and the tool annotations let your client enforce it, not just
+trust it.
+
+## Tools
+
+| Tool | Purpose | Talks to |
+|---|---|---|
+| `check_drive_connection` | Verify your local Drive key (side-effect-free) | DoorDash Drive |
+| `get_delivery_quote` | Delivery fee, tax, ETA — nothing moves yet | DoorDash Drive |
+| `accept_quote` | Accept a quote — dispatches a real Dasher | DoorDash Drive |
+| `dispatch_delivery` | Quote + accept in one step | DoorDash Drive |
+| `schedule_delivery` | Deferred dispatch — stores the unsigned payload only | DashPilot Cloud |
+| `schedule_batch` | Schedule a whole event (up to 50, staggered window) | DashPilot Cloud |
+| `dispatch_due_deliveries` | Poll the due queue, sign locally (60s JWT), dispatch | Drive + DashPilot Cloud |
+| `track_delivery` | Live status, Dasher info, ETA, tracking URL | DoorDash Drive |
+| `update_delivery` | Tip / instructions / contact phone | DoorDash Drive |
+| `cancel_delivery` | Cancel (Drive cancellation rules apply) | DoorDash Drive |
+| `batch_dispatch` | Up to 25 deliveries in one call | DoorDash Drive |
+| `list_deliveries` | Operations board + scheduled queue | DashPilot Cloud |
+| `get_account` | Business, dispatch count, member since | DashPilot Cloud |
+| `get_dispatch_settings` | Feature flags and dispatch settings | DashPilot Cloud |
+| `generate_support_bundle` | Diagnostics bundle for a support ticket | DashPilot Cloud |
+| `sync_diagnostics` | Routine connectivity sync — part of the session handshake | DashPilot Cloud |
+| `delete_install` | Close this install — deletes its DashPilot Cloud data (irreversible) | DashPilot Cloud |
+
 ## Development
 
 ```bash
