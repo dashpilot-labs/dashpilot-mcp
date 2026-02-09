@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs — DashPilot</title>
+<meta name="description" content="Install dashpilot-mcp, connect your DoorDash Drive key, and let your agent run deliveries. Configuration reference and full tool documentation.">
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">
+      <img src="assets/logo.svg" alt="DashPilot logo">
+      DASHPILOT
+    </a>
+    <button class="nav-toggle" aria-label="Menu">☰</button>
+    <div class="nav-links">
+      <a href="docs.html" class="active">Docs</a>
+      <a href="security.html">Security</a>
+      <a href="docs.html#quickstart" class="nav-cta">Get started</a>
+    </div>
+  </div>
+</nav>
+
+<section class="section" style="padding-top:56px">
+  <div class="wrap docs-layout">
+    <aside class="docs-side">
+      <a href="#quickstart">Quickstart</a>
+      <a href="#configuration">Configuration</a>
+      <a href="#tools">Tool reference</a>
+      <a href="#managed-routing">Managed routing</a>
+      <a href="#scheduling">How scheduling works</a>
+      <a href="#faq">FAQ</a>
+    </aside>
+
+    <div class="docs-main">
+      <span class="form-kicker">Form DP-D · Field manual</span>
+      <h2 style="margin-bottom:8px">Documentation</h2>
+      <p class="sub" style="margin-bottom:36px">Everything here reflects the actual package behavior — no aspirational docs.</p>
+
+      <h3 id="quickstart">Quickstart</h3>
+      <p>Prerequisites: Python 3.11+ and a DoorDash Developer Portal access key
+      (developer ID, key ID, signing secret). See
+      <a href="security.html">the security model</a>.</p>
+
+      <div class="tabs">
+        <div class="tab-btns">
+          <button class="tab-btn active" data-tab="t-uvx">uvx (recommended)</button>
+          <button class="tab-btn" data-tab="t-pip">pip / editable install</button>
+        </div>
+        <div class="tab-panel active" id="t-uvx">
+          <p style="margin-bottom:12px">Not on PyPI — this runs straight from the source tree. No install step, no stale copy to update.</p>
+          <div class="code"><div class="code-head"><span>shell — uvx runs it from a local path</span><button class="copy" data-copy>copy</button></div>
+<pre>uvx --from /absolute/path/to/dashpilot-mcp dashpilot-mcp</pre></div>
+        </div>
+        <div class="tab-panel" id="t-pip">
+          <div class="code"><div class="code-head"><span>shell</span><button class="copy" data-copy>copy</button></div>
+<pre>cd dashpilot-mcp
+uv sync
+uv run dashpilot-mcp</pre></div>
+        </div>
+      </div>
+
+      <p>Then register it with your MCP client. Claude Desktop / Cursor example:</p>
+      <div class="ticket">
+        <div class="ticket-stub"><span>Waybill · MCP client config</span><span class="barcode"></span><span>No. 001042</span></div>
+        <div class="code"><div class="code-head"><span>claude_desktop_config.json</span><button class="copy" data-copy>copy</button></div>
+<pre>{
+  "mcpServers": {
+    "dashpilot": {
+      "command": "uvx",
+      "args": ["--from", "/absolute/path/to/dashpilot-mcp", "dashpilot-mcp"],
+      "env": {
+        "DASHPILOT_API_URL": "https://your-namespace.functions.fnc.fr-par.scw.cloud",
+        "DASHPILOT_API_KEY": "dp_your_install_key"
+      }
+    }
+  }
+}</pre></div>
+        <div class="ticket-perf"></div>
+      </div>
+
+      <p>Drive credentials live in a <code>.env</code> file in your project directory —
+      the package reads it at startup, so the key isn't duplicated into every client
+      profile you sync:</p>
+      <div class="code"><div class="code-head"><span>.env</span><button class="copy" data-copy>copy</button></div>
+<pre>DASHPILOT_DRIVE_DEVELOPER_ID=dd_dev_...
+DASHPILOT_DRIVE_KEY_ID=dd_key_...
+DASHPILOT_DRIVE_KEY=your-base64-key</pre></div>
+
+      <p>First prompt to try:</p>
+      <div class="code"><div class="code-head"><span>your agent</span><button class="copy" data-copy>copy</button></div>
+<pre>Check my Drive connection, then quote a delivery from my restaurant
+to 350 5th Ave, New York, NY 10118. Don't dispatch yet — just the quote.</pre></div>
+
+      <h3 id="configuration">Configuration</h3>
+      <p>All configuration is environment variables; any of them can also live in a
+      project <code>.env</code> file (real environment variables win). HTTPS is enforced
+      for every URL — <code>http://</code> is accepted only for loopback development.</p>
+      <table class="tbl">
+        <tr><th>Variable</th><th>Default</th><th>What it does</th></tr>
+        <tr><td><code>DASHPILOT_API_KEY</code></td><td class="mut"><code>dp_…</code> (issued at registration)</td><td class="mut">Your install key for DashPilot Cloud — shown once when you register; save it.</td></tr>
+        <tr><td><code>DASHPILOT_API_URL</code></td><td class="mut"><code>http://localhost:8790</code></td><td class="mut">DashPilot Cloud endpoint. <b>Self-hosted</b> — there is no shared public instance, so this must point at wherever you deployed the <code>backend/</code> service (e.g. <code>https://your-namespace.functions.fnc.fr-par.scw.cloud</code>).</td></tr>
+        <tr><td><code>DASHPILOT_DRIVE_DEVELOPER_ID</code></td><td class="mut">—</td><td class="mut">From the DoorDash Developer Portal. Local only.</td></tr>
+        <tr><td><code>DASHPILOT_DRIVE_KEY_ID</code></td><td class="mut">—</td><td class="mut">Access key ID. Local only.</td></tr>
+        <tr><td><code>DASHPILOT_DRIVE_KEY</code></td><td class="mut">—</td><td class="mut">Base64 Drive access key. Used to sign JWTs on this machine.</td></tr>
+        <tr><td><code>DASHPILOT_DRIVE_BASE_URL</code></td><td class="mut"><code>https://openapi.doordash.com/drive/v2</code></td><td class="mut">Drive API bootstrap endpoint (see managed routing).</td></tr>
+        <tr><td><code>DASHPILOT_DRIVE_ROUTING</code></td><td class="mut"><code>managed</code></td><td class="mut"><code>managed</code> follows the cloud's routing block (sandbox → production cutover, no env edits). <code>manual</code> pins the env value.</td></tr>
+        <tr><td><code>DASHPILOT_CONFIG_TTL_SECONDS</code></td><td class="mut"><code>300</code></td><td class="mut">How stale the cached client config may get before a lazy refresh. Failed refreshes never fail a tool call.</td></tr>
+        <tr><td><code>DASHPILOT_STATE_FILE</code></td><td class="mut"><code>~/.dashpilot/state.json</code></td><td class="mut">Local state: which diagnostics check-ins this install has already reported.</td></tr>
+        <tr><td><code>DASHPILOT_TIMEOUT_S</code></td><td class="mut"><code>15</code></td><td class="mut">HTTP timeout for cloud calls.</td></tr>
+      </table>
+
+      <h3 id="tools">Tool reference</h3>
+      <p>All sixteen tools, exactly as shipped in v0.1.0. <b>Read-only</b> tools never
+      change state; <b>makes changes</b> tools can dispatch, spend, or modify — the
+      package annotates them so your agent's permission policy can gate them.</p>
+      <div data-tools>
+        <div class="toolsearch">
+          <input type="search" placeholder="Search tools… (try: schedule, quote, track)" aria-label="Search tools">
+          <div class="chips">
+            <button class="chip active" data-cat="all">All</button>
+            <button class="chip" data-cat="Connection">Connection</button>
+            <button class="chip" data-cat="Quoting & dispatch">Quoting & dispatch</button>
+            <button class="chip" data-cat="Scheduling">Scheduling</button>
+            <button class="chip" data-cat="Tracking & ops">Tracking & ops</button>
+            <button class="chip" data-cat="Support & diagnostics">Support</button>
+            <button class="chip" data-cat="Account & settings">Account</button>
+          </div>
+        </div>
+        <p class="tool-count" style="color:var(--faint);font-size:12.5px;font-family:var(--mono);margin-bottom:14px"></p>
+        <div class="tools"></div>
+        <div class="tools-empty">No tools match that search.</div>
+      </div>
+
+      <h3 id="managed-routing">Managed routing</h3>
+      <p>By default (<code>DASHPILOT_DRIVE_ROUTING=managed</code>) the package follows the
+      <code>drive</code> block in DashPilot Cloud's client config: sandbox while you test,
+      production at go-live, endpoint migrations pushed fleet-wide — no env edits on your side.
+      This is <b>endpoint selection only</b>: signed requests always travel directly from your
+      machine to DoorDash over TLS. DashPilot never proxies, logs, or even sees those requests.
+      Set <code>DASHPILOT_DRIVE_ROUTING=manual</code> to pin your env value and opt out.</p>
+
+      <h3 id="scheduling">How scheduling works</h3>
+      <ul>
+        <li><code>schedule_delivery</code> sends the <b>unsigned</b> delivery payload to DashPilot Cloud with a <code>dispatch_at</code> time.</li>
+        <li>Your local server polls the due queue (<code>dispatch_due_deliveries</code>) — on a cron, or whenever your agent decides.</li>
+        <li>When work is due, the package mints a <b>fresh 60-second JWT on your machine</b> and dispatches directly to DoorDash.</li>
+        <li>The cloud backend holds no credential at any point — it cannot dispatch, early or late, ever. If DashPilot Cloud is down, your past-due work simply waits for the next poll; nothing can fire without your key.</li>
+      </ul>
+
+      <h3 id="faq">FAQ</h3>
+      <div class="acc">
+        <div class="acc-item">
+          <button class="acc-q">Is DashPilot affiliated with DoorDash? <span class="chev">▾</span></button>
+          <div class="acc-a">No. DashPilot is an independent, unofficial project. DoorDash and Drive are trademarks of DoorDash, Inc. We use the public Drive API exactly as documented.</div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-q">Where does my signing secret live? <span class="chev">▾</span></button>
+          <div class="acc-a">In your MCP client's <code>env</code> config on your machine. The local server reads it to sign JWTs. See <a href="security.html">Security</a>.</div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-q">What diagnostics does the package collect? <span class="chev">▾</span></button>
+          <div class="acc-a">Crash reports only, and redacted structurally: when a tool call fails, the record keeps the tool name, error code, and argument <em>shapes</em> (strings and numbers are replaced by their types — no address, phone, key, or free text can ride along). Redacted records are included in a support bundle when you choose to send one.</div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-q">What does DashPilot Cloud store? <span class="chev">▾</span></button>
+          <div class="acc-a">Unsigned scheduled-delivery payloads (addresses and order values you chose to schedule), your delivery reports for the ops board, and your client config. No credentials, no tokens, no payment instruments.</div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-q">Who bills me for deliveries? <span class="chev">▾</span></button>
+          <div class="acc-a">DoorDash, directly, through your Drive account. DashPilot runs no billing and never touches money.</div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-q">What happens if DashPilot Cloud goes down? <span class="chev">▾</span></button>
+          <div class="acc-a">Quoting, dispatch, tracking, updates, and cancellation are unaffected — those go straight to DoorDash. Scheduling pauses: due work waits for the next successful poll. Your agent can always dispatch directly with <code>dispatch_delivery</code>.</div>
+        </div>
+        <div class="acc-item">
+          <button class="acc-q">Which MCP clients are supported? <span class="chev">▾</span></button>
+          <div class="acc-a">Any client that speaks MCP over stdio: Cursor, Claude Desktop, and others. The server is a plain Python process — no sidecars, no daemons beyond what you configure.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <img src="assets/logo.svg" alt="">
+        <p>DoorDash Drive automation for AI agents. Zero-credential cloud, local JWT signing, MIT licensed.</p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <a href="docs.html">Documentation</a>
+      </div>
+      <div>
+        <h4>Trust</h4>
+        <a href="security.html">Security model</a>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <span class="mut" style="font-family:var(--mono);font-size:12.5px;display:block;margin-top:6px">Self-hosted only — not published to a public registry.</span>
+      </div>
+    </div>
+    <div class="foot-legal">
+      <span>© <span data-year>2026</span> DASHPILOT · UNOFFICIAL — NOT AFFILIATED WITH DOORDASH, INC.</span>
+      <span>DOORDASH AND DRIVE ARE TRADEMARKS OF DOORDASH, INC.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/main.js"></script>
+</body>
+</html>
