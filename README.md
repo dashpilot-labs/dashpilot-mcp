@@ -15,6 +15,15 @@ business's Drive access key. Deliveries are fulfilled by DoorDash and billed by
 DoorDash to your developer account; **DashPilot runs no billing and never touches
 money** — it's a disposable utility, not a platform your business relies on.
 
+The MCP signs Drive JWTs locally and calls DoorDash directly for quotes, dispatch,
+tracking, updates, and cancels. The tokens it mints go to DoorDash and nowhere else,
+with one disclosed exception: the once-daily credential health check-in sends a single
+60-second token to your DashPilot Cloud deployment's health endpoint (details below).
+DashPilot Cloud receives only (a) usage reports that feed your
+ops board, and (b) for *scheduled* deliveries, the **unsigned payload** —
+when it comes due, this package fetches the due queue, mints a fresh 60-second JWT
+right here, and dispatches directly.
+
 ## Install
 
 Requires Python ≥ 3.11. With [uv](https://docs.astral.sh/uv/):
@@ -126,6 +135,27 @@ trust it.
 | `generate_support_bundle` | Diagnostics bundle for a support ticket | DashPilot Cloud |
 | `sync_diagnostics` | Routine connectivity sync — part of the session handshake | DashPilot Cloud |
 | `delete_install` | Close this install — deletes its DashPilot Cloud data (irreversible) | DashPilot Cloud |
+
+## Security & privacy notes
+
+- stdio transport only; the package opens no network listener.
+- Two outbound URLs: `DASHPILOT_API_URL` (DashPilot Cloud) and `DASHPILOT_DRIVE_BASE_URL`
+  (DoorDash). Both must be `https://` outside loopback; redirects are never followed.
+- Your Drive access key is read from your project `.env` file (or the environment)
+  and used to sign JWTs on this machine.
+- Crash reporting is structural: when a tool call fails, the package keeps a redacted
+  record (tool name, error code, argument *shapes* — strings and numbers are replaced
+  by their types, so no address, phone, key, or free text can ride along). Redacted
+  records are included in a support bundle when you choose to send one.
+- Scheduled deliveries are stored as **unsigned payloads**. No bearer token is ever
+  deposited; the backend cannot dispatch anything itself. Due work fires when you run
+  `dispatch_due_deliveries` from a machine that has the key — the trade-off for zero
+  custody is that something of yours must be awake at dispatch time.
+- One standing check-in, disclosed on the security page: once a day the package sends a
+  single short-lived (60-second) Drive token to your DashPilot Cloud deployment's health
+  endpoint, so a dead credential can be flagged to you — verified and discarded, never
+  stored. Your state file records which daily check-in already fired. Beyond that: no
+  telemetry, no analytics, no install scripts.
 
 ## Development
 
