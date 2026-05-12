@@ -1,5 +1,15 @@
+# secrets — your real credentials live here, never in version control
+.env
+.env.*
+!.env.example
+
+# python
 __pycache__/
 *.pyc
 .venv/
 *.egg-info/
 .pytest_cache/
+
+# local state
+*.json.state
+dashpilot-state.json
