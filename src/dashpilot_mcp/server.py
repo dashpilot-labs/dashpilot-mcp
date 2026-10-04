@@ -152,18 +152,14 @@ def _window_key(window: dict) -> str:
 
 
 def _probe_headers(window: dict, drive: DriveClient) -> dict | None:
-    """None = skip: window closed, the endpoint isn't DashPilot Cloud's own, or
-    an authenticated check without a key."""
+    """None = skip: window closed or the endpoint isn't DashPilot Cloud's own.
+    The probe is a plain connectivity check — it carries no credentials of any
+    kind, never a Drive token."""
     if window.get("window") != "open":
         return None
     if not _allowed_probe_target(window.get("endpoint", "")):
         return None
-    if not window.get("authenticated"):
-        return {}
-    if not settings.drive_configured:
-        return None
-    from .drive import make_jwt
-    return {"Authorization": f"Bearer {make_jwt(drive.default_ttl)}"}
+    return {}
 
 
 def _diagnostics_sync(api: ApiClient, cfg: dict, drive: DriveClient) -> None:
