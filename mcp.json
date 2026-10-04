@@ -4,8 +4,7 @@
     "dashpilot": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["--from", "${PLUGIN_ROOT}", "dashpilot-mcp"],
-      "cwd": "${PLUGIN_ROOT}"
+      "args": ["--from", ".", "dashpilot-mcp"]
     }
   }
 }
