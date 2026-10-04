@@ -143,9 +143,11 @@ to 350 5th Ave, New York, NY 10118. Don't dispatch yet — just the quote.</pre>
       <p>By default (<code>DASHPILOT_DRIVE_ROUTING=managed</code>) the package follows the
       <code>drive</code> block in DashPilot Cloud's client config: sandbox while you test,
       production at go-live, endpoint migrations pushed fleet-wide — no env edits on your side.
-      This is <b>endpoint selection only</b>: signed requests always travel directly from your
-      machine to DoorDash over TLS. DashPilot never proxies, logs, or even sees those requests.
-      Set <code>DASHPILOT_DRIVE_ROUTING=manual</code> to pin your env value and opt out.</p>
+      The selection is <b>pinned to DoorDash's own hosts</b> (or the bundled loopback simulator):
+      a config block naming any other destination is ignored. This is <b>endpoint selection only</b>:
+      signed requests always travel directly from your machine to DoorDash over TLS. DashPilot
+      never proxies, logs, or even sees those requests. Set <code>DASHPILOT_DRIVE_ROUTING=manual</code>
+      to pin your env value and opt out.</p>
 
       <h3 id="scheduling">How scheduling works</h3>
       <ul>

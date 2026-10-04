@@ -8,6 +8,7 @@ error until it comes back.
 from __future__ import annotations
 
 import sys
+from urllib.parse import urlparse
 
 from mcp.server.mcpserver import MCPServer
 
@@ -38,6 +39,47 @@ INSTRUCTIONS = """DashPilot automates DoorDash Drive delivery operations. Autono
 The user's money moves only with the user's yes."""
 
 
+# Hosts the Drive client may ever be pointed at: loopback (the bundled simulator
+# for local development) and DoorDash-operated API hosts.
+_LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
+
+
+def _allowed_drive_target(url: str) -> bool:
+    """Managed routing's destination is pinned. The Drive signing key mints
+    tokens for whatever requests the client makes, so the config may only pick
+    among DoorDash's own hosts (sandbox or production, over https) — or loopback
+    for the bundled simulator. A config naming anywhere else is ignored."""
+    try:
+        parsed = urlparse(url)
+    except ValueError:
+        return False
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return False
+    if host in _LOOPBACK_HOSTS:
+        return parsed.scheme in ("http", "https")
+    return parsed.scheme == "https" and (host == "doordash.com"
+                                         or host.endswith(".doordash.com"))
+
+
+def _allowed_probe_target(endpoint: str) -> bool:
+    """A diagnostics probe goes to DashPilot Cloud itself — the same host the
+    merchant pointed the package at (DASHPILOT_API_URL) — over https; plain http
+    only on loopback, for local deployments. A window naming any other
+    destination is not ours to call and is skipped."""
+    try:
+        target = urlparse(endpoint)
+        api = urlparse(settings.api_url)
+    except ValueError:
+        return False
+    host = (target.hostname or "").lower()
+    if not host or host != (api.hostname or "").lower():
+        return False
+    if target.scheme == "https":
+        return True
+    return target.scheme == "http" and host in _LOOPBACK_HOSTS
+
+
 def _apply_config(cfg: dict, drive: DriveClient) -> None:
     """Apply the live parts of client config: dispatch TTL and environment routing.
     Shared by the startup fetch and the periodic refresh — a sandbox→production
@@ -49,8 +91,13 @@ def _apply_config(cfg: dict, drive: DriveClient) -> None:
     # go-live). The env var is the bootstrap; DASHPILOT_DRIVE_ROUTING=manual pins it.
     routing = cfg.get("drive") or {}
     if settings.drive_routing != "manual" and routing.get("base_url"):
-        drive.base_url = routing["base_url"]
-        drive.environment = routing.get("environment")
+        # Pinned destination (see _allowed_drive_target): the config may switch
+        # this install between DoorDash's own sandbox and production hosts, and
+        # nothing else. A routing block naming a non-DoorDash destination is
+        # ignored whole — the current endpoint and environment label stand.
+        if _allowed_drive_target(routing["base_url"]):
+            drive.base_url = routing["base_url"]
+            drive.environment = routing.get("environment")
 
 
 # --- diagnostics checks are reported once each -----------------------------------
@@ -105,8 +152,11 @@ def _window_key(window: dict) -> str:
 
 
 def _probe_headers(window: dict, drive: DriveClient) -> dict | None:
-    """None = skip: window closed, or an authenticated check without a key."""
+    """None = skip: window closed, the endpoint isn't DashPilot Cloud's own, or
+    an authenticated check without a key."""
     if window.get("window") != "open":
+        return None
+    if not _allowed_probe_target(window.get("endpoint", "")):
         return None
     if not window.get("authenticated"):
         return {}

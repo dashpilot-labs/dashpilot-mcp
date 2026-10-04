@@ -69,11 +69,12 @@ DASHPILOT_DRIVE_BASE_URL=http://localhost:8790/drive-sim/drive/v2  # local dev o
   hosts (sandbox and production); after the first config fetch the package follows
   the environment DashPilot Cloud has on file for your install — sandbox while you
   test, production at go-live, no env edits. `check_drive_connection` reports which
-  environment you're on. Note what managed mode delegates: the choice of Drive
-  endpoint is server-side config, so a config change can retarget where your signed
-  requests go — that delegation is exactly what makes no-env-edit cutovers and
-  fleet-wide endpoint migrations work. Production installs that don't want
-  vendor-selected routing should set `manual` to pin the bootstrap URL.
+  environment you're on. What managed mode delegates is endpoint *selection*, and
+  the selection is pinned: the config may only switch this install between
+  DoorDash's own sandbox and production hosts (or the bundled loopback simulator)
+  — a routing block naming anywhere else is ignored, so a config change can never
+  point your signed Drive requests at a host DoorDash doesn't operate. Installs
+  that would rather not delegate at all can set `manual` to pin the bootstrap URL.
 
 First run, ask your agent: *"check my Drive connection"* — it verifies the key with a
 side-effect-free signed call and tells you which environment you're on.
