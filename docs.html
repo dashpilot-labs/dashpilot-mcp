@@ -77,7 +77,7 @@ uv run dashpilot-mcp</pre></div>
       "command": "uvx",
       "args": ["--from", "/absolute/path/to/dashpilot-mcp", "dashpilot-mcp"],
       "env": {
-        "DASHPILOT_API_URL": "https://your-namespace.functions.fnc.fr-par.scw.cloud",
+        "DASHPILOT_API_URL": "https://dashpilot6de8ccea-dashpilot.functions.fnc.fr-par.scw.cloud",
         "DASHPILOT_API_KEY": "dp_your_install_key"
       }
     }
@@ -106,7 +106,7 @@ to 350 5th Ave, New York, NY 10118. Don't dispatch yet — just the quote.</pre>
       <table class="tbl">
         <tr><th>Variable</th><th>Default</th><th>What it does</th></tr>
         <tr><td><code>DASHPILOT_API_KEY</code></td><td class="mut"><code>dp_…</code> (issued at registration)</td><td class="mut">Your install key for DashPilot Cloud — shown once when you register; save it.</td></tr>
-        <tr><td><code>DASHPILOT_API_URL</code></td><td class="mut"><code>http://localhost:8790</code></td><td class="mut">DashPilot Cloud endpoint. <b>Self-hosted</b> — there is no shared public instance, so this must point at wherever you deployed the <code>backend/</code> service (e.g. <code>https://your-namespace.functions.fnc.fr-par.scw.cloud</code>).</td></tr>
+        <tr><td><code>DASHPILOT_API_URL</code></td><td class="mut"><code>https://dashpilot6de8ccea-dashpilot.functions.fnc.fr-par.scw.cloud</code></td><td class="mut">DashPilot Cloud endpoint — defaults to the hosted service; set <code>http://localhost:8790</code> to run against a local development container.</td></tr>
         <tr><td><code>DASHPILOT_DRIVE_DEVELOPER_ID</code></td><td class="mut">—</td><td class="mut">From the DoorDash Developer Portal. Local only.</td></tr>
         <tr><td><code>DASHPILOT_DRIVE_KEY_ID</code></td><td class="mut">—</td><td class="mut">Access key ID. Local only.</td></tr>
         <tr><td><code>DASHPILOT_DRIVE_KEY</code></td><td class="mut">—</td><td class="mut">Base64 Drive access key. Used to sign JWTs on this machine.</td></tr>
@@ -209,7 +209,7 @@ to 350 5th Ave, New York, NY 10118. Don't dispatch yet — just the quote.</pre>
       </div>
       <div>
         <h4>Project</h4>
-        <span class="mut" style="font-family:var(--mono);font-size:12.5px;display:block;margin-top:6px">Self-hosted only — not published to a public registry.</span>
+        <span class="mut" style="font-family:var(--mono);font-size:12.5px;display:block;margin-top:6px">MIT licensed — published on PyPI (<code>uvx dashpilot-mcp</code>) and the official MCP Registry.</span>
       </div>
     </div>
     <div class="foot-legal">

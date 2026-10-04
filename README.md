@@ -35,7 +35,7 @@ Requires Python ≥ 3.11. With [uv](https://docs.astral.sh/uv/):
       "command": "uvx",
       "args": ["--from", "/absolute/path/to/dashpilot-mcp", "dashpilot-mcp"],
       "env": {
-        "DASHPILOT_API_URL": "http://localhost:8790",
+        "DASHPILOT_API_URL": "https://dashpilot6de8ccea-dashpilot.functions.fnc.fr-par.scw.cloud",
         "DASHPILOT_API_KEY": "dp_your_issued_key"
       }
     }
@@ -54,7 +54,9 @@ DASHPILOT_DRIVE_KEY=…
 DASHPILOT_DRIVE_BASE_URL=http://localhost:8790/drive-sim/drive/v2  # local dev only
 ```
 
-- `DASHPILOT_API_URL` — your DashPilot Cloud deployment (the local container works).
+- `DASHPILOT_API_URL` — the DashPilot Cloud service. Defaults to the hosted
+  instance (`https://dashpilot6de8ccea-dashpilot.functions.fnc.fr-par.scw.cloud`);
+  point it at `http://localhost:8790` to run against a local development container.
 - `DASHPILOT_API_KEY` — your install key. Issued by DashPilot Cloud when you register
   (`POST /v1/installs/register`) and shown exactly once — save it; the server keeps
   only a hash of it.

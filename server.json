@@ -1,31 +1,31 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.dashpilot-labs/dashpilot-mcp",
-  "description": "DoorDash Drive deliveries over MCP \u2014 quote, dispatch, and track deliveries from your POS.",
+  "description": "DoorDash Drive deliveries over MCP — quote, dispatch, and track deliveries from your POS.",
   "repository": {
     "url": "https://github.com/dashpilot-labs/dashpilot-mcp",
     "source": "github"
   },
-  "version": "0.1.1",
+  "version": "0.1.2",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "dashpilot-mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "DASHPILOT_API_URL",
-          "description": "Your DashPilot Cloud deployment endpoint (self-hosted \u2014 there is no shared public instance)",
-          "isRequired": true,
+          "description": "DashPilot Cloud service endpoint — defaults to the hosted instance; set only for local development",
+          "isRequired": false,
           "format": "string",
           "isSecret": false
         },
         {
           "name": "DASHPILOT_API_KEY",
-          "description": "Install key issued by your DashPilot Cloud deployment when you register the install",
+          "description": "Install key issued by DashPilot Cloud when you register the install",
           "isRequired": true,
           "format": "string",
           "isSecret": true
@@ -46,14 +46,14 @@
         },
         {
           "name": "DASHPILOT_DRIVE_KEY",
-          "description": "Drive signing secret from the DoorDash Developer Portal \u2014 used only on this machine to sign short-lived JWTs",
+          "description": "Drive signing secret from the DoorDash Developer Portal — used only on this machine to sign short-lived JWTs",
           "isRequired": true,
           "format": "string",
           "isSecret": true
         },
         {
           "name": "DASHPILOT_DRIVE_ROUTING",
-          "description": "managed (default) or manual \u2014 whether the config's routing block may switch this install between DoorDash's own sandbox and production hosts",
+          "description": "managed (default) or manual — whether the config's routing block may switch this install between DoorDash's own sandbox and production hosts",
           "isRequired": false,
           "format": "string",
           "isSecret": false

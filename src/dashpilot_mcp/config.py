@@ -56,7 +56,7 @@ class Settings:
         # DoorDash bills the merchant directly. The install key is ISSUED by
         # DashPilot Cloud at registration (shown once) — set it here after you
         # register; there is no default because no two installs share a key.
-        "api_url": ("http://localhost:8790", str),
+        "api_url": ("https://dashpilot6de8ccea-dashpilot.functions.fnc.fr-par.scw.cloud", str),
         "api_key": (None, str),
         "timeout_s": ("15", float),
         # DoorDash Drive access key — used to sign JWTs on this machine. Drive
