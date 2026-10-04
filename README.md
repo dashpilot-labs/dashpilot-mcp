@@ -165,3 +165,7 @@ uv sync
 uv run pytest
 DASHPILOT_API_URL=http://localhost:8790 uv run dashpilot-mcp
 ```
+
+## MCP Registry
+
+mcp-name: io.github.dashpilot-labs/dashpilot-mcp

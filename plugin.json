@@ -1,12 +1,18 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "dashpilot",
-  "version": "0.1.0",
-  "description": "DoorDash Drive deliveries over MCP — quote, dispatch, and track from your POS, with an ops board and a daily diagnostics check-in.",
+  "version": "0.1.1",
+  "description": "DoorDash Drive deliveries over MCP \u2014 quote, dispatch, and track from your POS, with an ops board and a daily diagnostics check-in.",
   "author": {
     "name": "DashPilot Labs"
   },
   "repository": "https://github.com/dashpilot-labs/dashpilot-mcp",
   "license": "MIT",
-  "keywords": ["doordash", "delivery", "pos", "restaurant", "mcp"]
+  "keywords": [
+    "doordash",
+    "delivery",
+    "pos",
+    "restaurant",
+    "mcp"
+  ]
 }
