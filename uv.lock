@@ -225,8 +225,8 @@ wheels = [
 ]
 
 [[package]]
-name = "dashpilot-mcp"
-version = "0.1.4"
+name = "doordash-dashpilot-mcp"
+version = "0.1.5"
 source = { editable = "." }
 dependencies = [
     { name = "httpx2" },

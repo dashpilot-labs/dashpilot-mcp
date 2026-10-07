@@ -28,7 +28,7 @@ class ApiClient:
         self._headers = {
             "authorization": f"Bearer {api_key or settings.api_key or ''}",
             "accept": "application/json",
-            "user-agent": f"dashpilot-mcp/{__version__}",
+            "user-agent": f"doordash-dashpilot-mcp/{__version__}",
         }
         self._async: httpx.AsyncClient | None = None
 

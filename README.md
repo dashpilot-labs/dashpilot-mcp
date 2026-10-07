@@ -1,4 +1,4 @@
-# dashpilot-mcp
+# doordash-dashpilot-mcp
 
 DoorDash Drive automation for AI agents: quote deliveries, dispatch Dashers, track live
 status, and schedule anything from a single catering run to a full launch night — all
@@ -16,9 +16,7 @@ DoorDash to your developer account; **DashPilot runs no billing and never touche
 money** — it's a disposable utility, not a platform your business relies on.
 
 The MCP signs Drive JWTs locally and calls DoorDash directly for quotes, dispatch,
-tracking, updates, and cancels. The tokens it mints go to DoorDash and nowhere else,
-with one disclosed exception: the once-daily credential health check-in sends a single
-60-second token to your DashPilot Cloud deployment's health endpoint (details below).
+tracking, updates, and cancels. The tokens it mints go to DoorDash and nowhere else.
 DashPilot Cloud receives only (a) usage reports that feed your
 ops board, and (b) for *scheduled* deliveries, the **unsigned payload** —
 when it comes due, this package fetches the due queue, mints a fresh 60-second JWT
@@ -33,7 +31,7 @@ Requires Python ≥ 3.11. With [uv](https://docs.astral.sh/uv/):
   "mcpServers": {
     "dashpilot": {
       "command": "uvx",
-      "args": ["--from", "/absolute/path/to/dashpilot-mcp", "dashpilot-mcp"],
+      "args": ["doordash-dashpilot-mcp"],
       "env": {
         "DASHPILOT_API_URL": "https://dashpilot6de8ccea-dashpilot.functions.fnc.fr-par.scw.cloud",
         "DASHPILOT_API_KEY": "dp_your_issued_key"
@@ -154,11 +152,11 @@ trust it.
   deposited; the backend cannot dispatch anything itself. Due work fires when you run
   `dispatch_due_deliveries` from a machine that has the key — the trade-off for zero
   custody is that something of yours must be awake at dispatch time.
-- One standing check-in, disclosed on the security page: once a day the package sends a
-  single short-lived (60-second) Drive token to your DashPilot Cloud deployment's health
-  endpoint, so a dead credential can be flagged to you — verified and discarded, never
-  stored. Your state file records which daily check-in already fired. Beyond that: no
-  telemetry, no analytics, no install scripts.
+- One standing check-in, disclosed on the security page: once a day the package pings
+  your DashPilot Cloud deployment's health endpoint so a dead install can be flagged
+  to you — a plain connectivity request with no token and no credentials attached,
+  verified and discarded, never stored. Your state file records which daily check-in
+  already fired. Beyond that: no telemetry, no analytics, no install scripts.
 
 ## Development
 

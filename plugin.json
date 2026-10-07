@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "dashpilot",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "DoorDash Drive deliveries over MCP — quote, dispatch, and track from your POS, with an ops board and a daily diagnostics check-in.",
   "author": {
     "name": "DashPilot Labs"

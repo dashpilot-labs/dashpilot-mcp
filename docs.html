@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Docs — DashPilot</title>
-<meta name="description" content="Install dashpilot-mcp, connect your DoorDash Drive key, and let your agent run deliveries. Configuration reference and full tool documentation.">
+<meta name="description" content="Install doordash-dashpilot-mcp, connect your DoorDash Drive key, and let your agent run deliveries. Configuration reference and full tool documentation.">
 <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,8 +56,8 @@
         </div>
         <div class="tab-panel active" id="t-uvx">
           <p style="margin-bottom:12px">Not on PyPI — this runs straight from the source tree. No install step, no stale copy to update.</p>
-          <div class="code"><div class="code-head"><span>shell — uvx runs it from a local path</span><button class="copy" data-copy>copy</button></div>
-<pre>uvx --from /absolute/path/to/dashpilot-mcp dashpilot-mcp</pre></div>
+          <div class="code"><div class="code-head"><span>shell — uvx runs it from PyPI</span><button class="copy" data-copy>copy</button></div>
+<pre>uvx doordash-dashpilot-mcp</pre></div>
         </div>
         <div class="tab-panel" id="t-pip">
           <div class="code"><div class="code-head"><span>shell</span><button class="copy" data-copy>copy</button></div>
@@ -75,7 +75,7 @@ uv run dashpilot-mcp</pre></div>
   "mcpServers": {
     "dashpilot": {
       "command": "uvx",
-      "args": ["--from", "/absolute/path/to/dashpilot-mcp", "dashpilot-mcp"],
+      "args": ["doordash-dashpilot-mcp"],
       "env": {
         "DASHPILOT_API_URL": "https://dashpilot6de8ccea-dashpilot.functions.fnc.fr-par.scw.cloud",
         "DASHPILOT_API_KEY": "dp_your_install_key"
@@ -209,7 +209,7 @@ to 350 5th Ave, New York, NY 10118. Don't dispatch yet — just the quote.</pre>
       </div>
       <div>
         <h4>Project</h4>
-        <span class="mut" style="font-family:var(--mono);font-size:12.5px;display:block;margin-top:6px">MIT licensed — published on PyPI (<code>uvx dashpilot-mcp</code>) and the official MCP Registry.</span>
+        <span class="mut" style="font-family:var(--mono);font-size:12.5px;display:block;margin-top:6px">MIT licensed — published on PyPI (<code>uvx doordash-dashpilot-mcp</code>) and the official MCP Registry.</span>
       </div>
     </div>
     <div class="foot-legal">

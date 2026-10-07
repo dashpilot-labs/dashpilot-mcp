@@ -252,7 +252,7 @@ def build_server(api: ApiClient | None = None,
                    cached_config=lambda: refresher.cfg)
     # Log the environment label rather than the routing URL — the label is the
     # useful fact in client log files.
-    print(f"dashpilot-mcp {__version__} ready (api: {settings.api_url}, "
+    print(f"doordash-dashpilot-mcp {__version__} ready (api: {settings.api_url}, "
           f"drive environment: {drive.environment or 'unknown'}, "
           f"config: {config_note})", file=sys.stderr)
     return mcp

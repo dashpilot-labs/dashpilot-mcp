@@ -1,6 +1,6 @@
 [project]
-name = "dashpilot-mcp"
-version = "0.1.4"
+name = "doordash-dashpilot-mcp"
+version = "0.1.5"
 description = "DoorDash Drive automation for AI agents — quote, dispatch, track, schedule, and batch deliveries for restaurants (unofficial)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -11,6 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
+doordash-dashpilot-mcp = "dashpilot_mcp.server:main"
 dashpilot-mcp = "dashpilot_mcp.server:main"
 
 [dependency-groups]
